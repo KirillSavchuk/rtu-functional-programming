@@ -1,20 +1,22 @@
-package imperative;
+package functional;
 
+import static functional.PerfectNumber.STATE.PERFECT;
+import static functional.PerfectNumber.STATE.ABUNDANT;
+import static functional.PerfectNumber.STATE.DEFICIENT;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static imperative.PerfectNumber.STATE.ABUNDANT;
-import static imperative.PerfectNumber.STATE.DEFICIENT;
-import static imperative.PerfectNumber.STATE.PERFECT;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class PerfectNumberTest {
+import functional.PerfectNumber;
+
+class PerfectNumberTest {
 
 	@Test
 	public void test6Perfect() {
 		assertEquals(PERFECT, PerfectNumber.process(6));
 	}
-
+	
 	@Test
 	public void test8Deficient() {
 		assertEquals(DEFICIENT, PerfectNumber.process(8));
@@ -54,6 +56,6 @@ public class PerfectNumberTest {
 		Object[] expected = new Integer[] { 1, 2, 4, 8 };
 		int n = 8;
 		assertArrayEquals(expected, PerfectNumber.divisors(n).toArray());
-	}	
-	
+	}
+
 }

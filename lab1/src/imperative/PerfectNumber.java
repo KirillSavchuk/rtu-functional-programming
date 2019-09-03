@@ -6,11 +6,11 @@ import java.util.Set;
 
 public class PerfectNumber {
 
-	enum STATE {
+	public static enum STATE {
 		DEFICIENT,
 		PERFECT,
 		ABUNDANT,
-		ERROR
+		ERROR;
 	}
 	
 	public static void main(String[] args) {
