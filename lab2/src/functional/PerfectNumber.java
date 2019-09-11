@@ -64,7 +64,7 @@ public class PerfectNumber {
 	/**
 	 *  @return -1 if sum > number
 	 *  @return  0 if sum = number
-	 *	@return -1 if sum > number
+	 *	@return +1 if sum > number
 	 */
 	public static Comparator<Integer> perfectNumberComparator = (sum, number) -> sum.compareTo(number);	
 
