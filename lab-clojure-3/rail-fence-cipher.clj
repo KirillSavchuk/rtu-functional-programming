@@ -14,20 +14,21 @@
   (str/replace message #" " "_")
 )
 
-(defn debug-encript [row length col index char]
-  "Prints following DEBUG message: '2 * 6 + 2 = 14 [C]'"
-  (println (str row " * " length " + " col " = " index " ["char"]"))
+(defn debug-get-fence-matrix [row width col index]
+  "Prints following DEBUG message: '2 * 6 + 2 = 14'"
+  (println (str row " * " width " + " col " = " index))
 )
 
 (defn get-fence-matrix [width height]
+  "Returns matrix cess indexes where Rail Fence Cipher should go."
   (def row 0)
   (def direction-down false)        
   (vec
-    (for [col (range 0 (count width))] (do
+    (for [col (range 0 width)] (do
       (if (or (= 0 row) (= row (- height 1))) 
         (def direction-down (not direction-down)))
-      (def matrix-index (+ (* row (count width)) col))
-      ;;(debug-encript row (count width) col matrix-index (nth width col))
+      (def matrix-index (+ (* row width) col))
+      ;; (debug-get-fence-matrix row width col matrix-index)
       (def row 
         (if (true? direction-down) 
           (inc row)
@@ -42,7 +43,7 @@
     (for [[pos char]
       (sort-by first 
         (zipmap 
-          (get-fence-matrix message key)
+          (get-fence-matrix (count message) key)
           (vec message)))
     ] char)
   )
@@ -71,7 +72,12 @@
   (is (= "Long___space" (prepare "Long   space")))
   (is (= "WE_ARE_DISCOVERED_FLEE_AT_ONCE" (prepare "WE ARE DISCOVERED FLEE AT ONCE")))
 )
-(testing "encrypt [message 3]"
+(testing "get-fence-matrix [width height]"
+  (is (= [0 11 2 13 4 15 6 17 8 19] (get-fence-matrix 10 2)))
+  (is (= [0 6 12 8 4] (get-fence-matrix 5 3)))
+  (is (= [0 13 26 39 28 17 6 19 32 45 34 23] (get-fence-matrix 12 4)))
+)
+(testing "encrypt [message 3]" 
   (is (= "ABC" (encrypt "ABC" 3)))
   (is (= "ABDC" (encrypt "ABCD" 3)))
   (is (= "AEBDC" (encrypt "ABCDE" 3)))
