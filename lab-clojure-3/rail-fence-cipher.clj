@@ -19,24 +19,31 @@
   (println (str row " * " length " + " col " = " index " ["char"]"))
 )
 
+(defn get-fence-matrix [width height]
+  (def row 0)
+  (def direction-down false)        
+  (vec
+    (for [col (range 0 (count width))] (do
+      (if (or (= 0 row) (= row (- height 1))) 
+        (def direction-down (not direction-down)))
+      (def matrix-index (+ (* row (count width)) col))
+      ;;(debug-encript row (count width) col matrix-index (nth width col))
+      (def row 
+        (if (true? direction-down) 
+          (inc row)
+          (dec row)))
+      matrix-index
+    ))
+  )
+)
+
 (defn encrypt [message key]
   (str/join
     (for [[pos char]
-      (sort-by first (do
-        (def row 0)
-        (def direction-down false)        
-        (for [col (range 0 (count message))] (do
-            (if (or (= 0 row) (= row (- key 1))) 
-              (def direction-down (not direction-down)))
-            (def matrix-index (+ (* row (count message)) col))
-            ;; (debug-encript row (count message) col matrix-index (nth message col))
-            (def row 
-              (if (true? direction-down) 
-                (inc row)
-                (dec row)))
-            [matrix-index (nth message col)]
-        ))
-      ))
+      (sort-by first 
+        (zipmap 
+          (get-fence-matrix message key)
+          (vec message)))
     ] char)
   )
 )
