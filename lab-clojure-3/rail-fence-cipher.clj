@@ -2,6 +2,10 @@
 (require '[clojure.string :as str])
 
 
+;; ################################################
+;; #                   COMMON                     #
+;; ################################################
+
 (defn validate [message key]
   "Returns TRUE if [key] is larger than 1 and i [message] consists only word characters and blank spaces; else return FALSE."
   (if (re-matches #"[\w ]+" message) 
@@ -38,20 +42,62 @@
   )
 )
 
+(defn get-2d-cell-str-index [cell key]
+  "Returns 2d array's cell 'projection' to 1d row, which represents string, taking [key] as a 2d array's row length."
+  (mod cell key)
+)
+
+(defn get-encrypt-fence-chars [message key]
+  "Returns {key} matrix cell indexes and {value} message chars, where Rail Fence Cipher should go."
+  (zipmap 
+    (get-fence-matrix (count message) key)
+    (vec message))
+)
+
+(defn get-decrypt-fence-chars [message key]
+  (zipmap
+    (sort (get-fence-matrix (count message) key))
+    (vec message))
+)
+
+
+;; ################################################
+;; #                   ENCRYPT                    #
+;; ################################################
+
 (defn encrypt [message key]
   (str/join
     (for [[pos char]
-      (sort-by first 
-        (zipmap 
-          (get-fence-matrix (count message) key)
-          (vec message)))
+      (sort-by first (get-encrypt-fence-chars message key))
     ] char)
   )
 )
-
 (defn encrypt-message [message key]
   (if (validate message key) 
     (encrypt (prepare message) key)  
+    (str "ERROR: Invalid [message] or [key]!"))
+)
+
+
+;; ################################################
+;; #                   DECRYPT                    #
+;; ################################################
+
+(defn decrypt [message key]
+  (str/join
+    (for [[pos ch]
+      (sort-by first
+        (for [[index char] (get-decrypt-fence-chars message key)]
+          [(get-2d-cell-str-index index (count message)) char]
+        )
+      )] 
+      ch
+    )
+  )
+)
+(defn decrypt-message [message key]
+  (if (validate message key) 
+    (decrypt (prepare message) key)  
     (str "ERROR: Invalid [message] or [key]!"))
 )
 
@@ -77,7 +123,12 @@
   (is (= [0 6 12 8 4] (get-fence-matrix 5 3)))
   (is (= [0 13 26 39 28 17 6 19 32 45 34 23] (get-fence-matrix 12 4)))
 )
-(testing "encrypt [message 3]" 
+(testing "get-encrypt-fence-chars [message key]"
+  (is (= {0 \A} (get-encrypt-fence-chars "A" 1)))
+  (is (= {0 \A, 4 \B, 8 \C} (get-encrypt-fence-chars "ABC" 3)))
+  (is (= {0 \A, 6 \B, 12 \C, 8 \D, 4 \E} (get-encrypt-fence-chars "ABCDE" 3)))
+)
+(testing "encrypt [message key]" 
   (is (= "ABC" (encrypt "ABC" 3)))
   (is (= "ABDC" (encrypt "ABCD" 3)))
   (is (= "AEBDC" (encrypt "ABCDE" 3)))
@@ -86,11 +137,7 @@
   (is (= "AEBDFHCG" (encrypt "ABCDEFGH" 3)))
   (is (= "AEIBDFHCG" (encrypt "ABCDEFGHI" 3)))
   (is (= "WRIVDETCEAEDSOEE_LEA_NE__CRF_O" (encrypt "WE_ARE_DISCOVERED_FLEE_AT_ONCE" 3)))
-)
-(testing "encrypt [message 5]"
   (is (= "WIDTEDSE_A___CRF_OAEOELENERVEC" (encrypt "WE_ARE_DISCOVERED_FLEE_AT_ONCE" 5)))
-)
-(testing "encrypt [message 10]"
   (is (= "WFE_L_DEAEERR_EEA_VTDO_EICOCSN" (encrypt "WE_ARE_DISCOVERED_FLEE_AT_ONCE" 10)))
 )
 (testing "encrypt-message [message key]"
@@ -99,7 +146,29 @@
   (is (= "WRIVDETCEAEDSOEE_LEA_NE__CRF_O" (encrypt-message "WE ARE DISCOVERED FLEE AT ONCE" 3)))
   (is (= "A____C_DB_" (encrypt-message "A B  C   D" 3)))
 )
-
+(testing "decrypt [message key]" 
+  (is (= "ABC" (decrypt "ABC" 3)))
+  (is (= "ABCD" (decrypt "ABDC" 3)))
+  (is (= "ABCDE" (decrypt "AEBDC" 3)))
+  (is (= "ABCDEF" (decrypt "AEBDFC" 3)))
+  (is (= "ABCDEFG" (decrypt "AEBDFCG" 3)))
+  (is (= "ABCDEFGH" (decrypt "AEBDFHCG" 3)))
+  (is (= "ABCDEFGHI" (decrypt "AEIBDFHCG" 3)))
+  (is (= "WE_ARE_DISCOVERED_FLEE_AT_ONCE" (decrypt "WRIVDETCEAEDSOEE_LEA_NE__CRF_O" 3)))
+  (is (= "WE_ARE_DISCOVERED_FLEE_AT_ONCE" (decrypt "WIDTEDSE_A___CRF_OAEOELENERVEC" 5)))
+  (is (= "WE_ARE_DISCOVERED_FLEE_AT_ONCE" (decrypt "WFE_L_DEAEERR_EEA_VTDO_EICOCSN" 10)))
+)
+(testing "decrypt-message [message key]"
+  (is (= "ERROR: Invalid [message] or [key]!" (decrypt-message "NOT-VALID" 3)))
+  (is (= "ERROR: Invalid [message] or [key]!" (decrypt-message "TooSmallKey" 1)))
+  (is (= "WE_ARE_DISCOVERED_FLEE_AT_ONCE" (decrypt-message "WRIVDETCEAEDSOEE_LEA_NE__CRF_O" 3)))
+)
+(testing "!--- Rail Fence Cipher ---!"
+  (is (= "DECRYPT_ENCRYPT_NO_CHANGES" (decrypt-message (encrypt-message "DECRYPT_ENCRYPT_NO_CHANGES" 3) 3)))
+  (is (= "ABC_123_xyz_0" (decrypt-message (encrypt-message "ABC_123_xyz_0" 5) 5)))
+  (is (= "QWERTYUIOPASDFGHJKLZXCVBNM" (decrypt-message (encrypt-message "QWERTYUIOPASDFGHJKLZXCVBNM" 4) 4)))
+  (is (= "QWERTYUIOPASDFGHJKLZXCVBNM" (decrypt-message (encrypt-message "QWERTYUIOPASDFGHJKLZXCVBNM" 10) 10)))
+)
 
 ;; ################################################
 ;; #               NOT USED ANYMORE               #
@@ -127,9 +196,4 @@
 (defn make-empty-clone [s]
   "DEPRECATED: Returns empty string with a length of [s] string."
   (str/join (for [i (range 0 (count s))] "-"))
-)
-
-(defn get-2d-cell-str-index [cell key]
-  "DEPRECATED: Returns 2d array's cell 'projection' to 1d row, which represents string, taking [key] as a 2d array's row length."
-  (if (= 0 (mod cell key)) key (mod cell key))
 )
