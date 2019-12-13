@@ -8,7 +8,7 @@
 
 (defn validate [message key]
   "Returns TRUE if [key] is larger than 1 and i [message] consists only word characters and blank spaces; else return FALSE."
-  (if (re-matches #"[\w ]+" message) 
+  (if (re-matches #"^[A-Za-z\s_]+$" message) 
     (> key 1) 
     false)
 )
@@ -110,8 +110,10 @@
   (is (= false (validate "" 3)))
   (is (= false (validate "TEXT" 1)))
   (is (= false (validate "IT IS UN-VALID" 3)))
+  (is (= false (validate "abc 123" 2)))
+  (is (= true (validate "GOOD_text" 5)))
   (is (= true (validate "IT IS VALID" 3)))
-  (is (= true (validate "abc 123" 2)))
+  (is (= true (validate "ValidationPassed" 10)))
 )
 (testing "prepare [message]"
   (is (= "IT_IS_OK" (prepare "IT IS OK")))
@@ -164,8 +166,8 @@
   (is (= "WE_ARE_DISCOVERED_FLEE_AT_ONCE" (decrypt-message "WRIVDETCEAEDSOEE_LEA_NE__CRF_O" 3)))
 )
 (testing "!--- Rail Fence Cipher ---!"
+  (is (= "ERROR: Invalid [message] or [key]!" (decrypt-message (encrypt-message "ABC_123_xyz_0" 5) 5)))
   (is (= "DECRYPT_ENCRYPT_NO_CHANGES" (decrypt-message (encrypt-message "DECRYPT_ENCRYPT_NO_CHANGES" 3) 3)))
-  (is (= "ABC_123_xyz_0" (decrypt-message (encrypt-message "ABC_123_xyz_0" 5) 5)))
   (is (= "QWERTYUIOPASDFGHJKLZXCVBNM" (decrypt-message (encrypt-message "QWERTYUIOPASDFGHJKLZXCVBNM" 4) 4)))
   (is (= "QWERTYUIOPASDFGHJKLZXCVBNM" (decrypt-message (encrypt-message "QWERTYUIOPASDFGHJKLZXCVBNM" 10) 10)))
 )
